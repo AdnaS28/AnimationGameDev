@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kviz Aplikacija</title>
+  <style>
+    /* Dodajte stilove po potrebi */
+    label {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kviz</h1>
+  <div id="quiz-container"></div>
+
+  <script>
+    async function loadQuizData() {
+      try {
+        const response = await fetch('quiz.json');
+        const data = await response.json();
+        return data.quiz;
+      } catch (error) {
+        console.error('Greška pri učitavanju kviza:', error);
+      }
+    }
+
+    function generateQuestionHTML(questionKey, questionData) {
+      const storedAnswer = localStorage.getItem(questionKey);
+      const isChecked = storedAnswer ? `checked="checked"` : '';
+
+      const questionHTML = document.createElement('div');
+      questionHTML.innerHTML = `
+        <div>
+          <h3>${questionData.question}</h3>
+          <ul>
+            ${questionData.options.map((option, index) => `
+              <li>
+                <input type="radio" id="${questionKey}-${index}" name="${questionKey}" value="${option}" ${isChecked} />
+                <label for="${questionKey}-${index}">${option}</label>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+
+      const radioButtons = questionHTML.querySelectorAll('input[type="radio"]');
+      radioButtons.forEach(radioButton => {
+        radioButton.addEventListener('change', () => {
+          if (radioButton.checked) {
+            localStorage.setItem(questionKey, radioButton.value);
+          }
+        });
+      });
+
+      return questionHTML;
+    }
+
+    async function initializeQuiz() {
+      const quizData = await loadQuizData();
+      const quizContainer = document.getElementById('quiz-container');
+
+      Object.entries(quizData).forEach(([questionKey, questionData]) => {
+        const questionHTML = generateQuestionHTML(questionKey, questionData);
+        quizContainer.appendChild(questionHTML);
+      });
+    }
+
+    window.onload = initializeQuiz;
+  </script>
+</body>
+</html>
